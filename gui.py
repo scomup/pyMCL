@@ -120,7 +120,7 @@ class LSLAMGUI(threading.Thread):
             
     def set_partcles(self,particles):
         for particle in particles:
-            a = pg.ArrowItem(angle=particle[1]*180/np.pi, tipAngle=30, baseAngle=20, headLen=10, tailLen=20, tailWidth=1, pen=None, brush='y')
+            a = pg.ArrowItem(angle=particle[2]*180/np.pi + 180., tipAngle=30, baseAngle=20, headLen=10, tailLen=20, tailWidth=1, pen=None, brush='y')
             a.setPos(particle[0],particle[1])
             a.setParentItem(self.img)
             self.particle_handle.append(a)

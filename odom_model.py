@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # coding: UTF-8
 
+# Odometry motion model
+# Probabilistic Robotics (pp.107 Table 5.6)
+# https://docs.ufpr.br/~danielsantos/ProbabilisticRobotics.pdf
+
 import random
 from math import *
 import matplotlib.pyplot as plt
@@ -30,8 +34,7 @@ class Odom_Model:
         return sigma * x2 * sqrt(-2.0*log(w)/w) 
 
     def update(self, pose_pre, pose_now):
-        # Probabilistic Robotics (Table 5.6)
-        # https://docs.ufpr.br/~danielsantos/ProbabilisticRobotics.pdf
+        # Probabilistic Robotics (pp.110 Table 5.6)
         A1 = self.A1
         A2 = self.A2
         A3 = self.A3

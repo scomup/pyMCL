@@ -10,13 +10,22 @@ import numpy as np
 from math import *
 
 class Prob_map:
-    def __init__(self, max_dist = 0.8, scale = 0.025, fre_thr = 200 , occ_thr = 20):
+    def __init__(self, original_point = (300,150), max_dist = 0.8, resolution = 0.025, fre_thr = 200 , occ_thr = 20):
         self.max_dist = max_dist
-        self.scale = scale
+        self.resolution = resolution
         self.fre_thr = fre_thr
         self.occ_thr = occ_thr
         self.size_x = 0
         self.size_y = 0
+        self.original_point = np.array(original_point)
+
+    def world_map(self, world_point):
+        map_point = world_point/self.resolution + np.tile(self.original_point,(world_point.shape[0],1))
+        return map_point
+
+    def map_world(self, map_point):
+        world_point = (map_point - np.tile(self.original_point,(map_point.shape[0],1)) ) * self.resolution
+        return world_point
 
     def read_img(self, img_name):
         image = Image.open(img_name)
@@ -27,7 +36,7 @@ class Prob_map:
         self.size_y = self.map_raw.shape[0]
 
     def cal_dist(self, dx, dy):
-        dist = sqrt( dx**2 + dy**2 ) * self.scale
+        dist = sqrt( dx**2 + dy**2 ) * self.resolution
         if dist > self.max_dist:
             return self.max_dist
         else:

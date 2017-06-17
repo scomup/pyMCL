@@ -46,10 +46,7 @@ class Odom_Model:
         A2 = self.A2
         A3 = self.A3
         A4 = self.A4
-        #pose_now = [0.,0.,0.]
-        #pose_now[0] = pose_pre[0] + dalta[0]
-        #pose_now[1] = pose_pre[1] + dalta[1]
-        #pose_now[2] = self.fix_angle(pose_pre[2] + dalta[2])
+        res = [0.,0.,0.]
     
         rot1 = atan2(pose_now[1] - pose_pre[1], pose_now[0] - pose_pre[0]) - pose_pre[2]
         trans = sqrt((pose_now[1] - pose_pre[1])**2 + (pose_now[0] - pose_pre[0])**2)
@@ -57,10 +54,10 @@ class Odom_Model:
         rot1_hat = rot1-self.sample(A1*rot1 + A2*trans)
         trans_hat = trans-self.sample(A3*trans + A4*(rot1 + rot2))
         rot2_hat = rot2-self.sample(A1*rot2 + A2*trans)
-        p[0] = p[0] + trans_hat * cos( p[2] + rot1_hat)
-        p[1] = p[1] + trans_hat * sin( p[2] + rot1_hat)
-        p[2] = self.fix_angle(p[2] + rot1_hat + rot2_hat)
-        return p
+        res[0] = p[0] + trans_hat * cos( p[2] + rot1_hat)
+        res[1] = p[1] + trans_hat * sin( p[2] + rot1_hat)
+        res[2] = self.fix_angle(p[2] + rot1_hat + rot2_hat)
+        return res
 
 
 if __name__ == '__main__':
@@ -78,8 +75,8 @@ if __name__ == '__main__':
     x = []
     y = []
 
-    odom_model = Odom_Model()
-    #odom_model = Odom_Model(0.1, 0.0, 0.05, 0.0)
+    #odom_model = Odom_Model()
+    odom_model = Odom_Model(0.1, 0.0, 0.05, 0.0)
     particles = []
     for i in range(1000):
         particles.append(pose_1)
@@ -88,27 +85,20 @@ if __name__ == '__main__':
     plt.xlim((-1,4))
     plt.ylim((-1,4))
 
-    for j in range(1,len(poses)):
+    
+    for j in range(len(poses)):
+        new_particles = []
         for i in range(1000):
+            if j == 0:
+                break
             pose_now_pre = odom_model.update(particles[i], poses[j-1], poses[j])
             x.append(pose_now_pre[0])
             y.append(pose_now_pre[1])
+            new_particles.append(pose_now_pre)
+        if j != 0:
+            particles = new_particles
         plt.scatter(x,y,s=0.1, c= 'b')
         v = np.matrix([[1.],[0.]])
         u=R(poses[j][2])*v
         plt.quiver(poses[j][0], poses[j][1], 2*u[0,0], 2*u[1,0], scale=30)
     plt.show()
-
-    #plt.figure()
-    #plt.xlim((-1,4))
-    #plt.ylim((-1,4))
-    #
-    #v = np.matrix([[1.],[0.]])
-    #u=R(pose_pre[2])*v
-    #Q1 = plt.quiver(pose_pre[0], pose_pre[1], u[0,0], u[1,0])
-    #u=R(pose_now[2])*v
-    #Q1 = plt.quiver(pose_now[0], pose_now[1], u[0,0], u[1,0])
-    #plt.plot( [pose_now[0],pose_pre[0]], [pose_now[1],pose_pre[1]],c = 'r')
-    #plt.scatter(x,y,s=1)
-    #plt.show()
-    #print rot1,trans,rot2

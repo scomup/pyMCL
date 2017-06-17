@@ -94,13 +94,28 @@ class LSLAMGUI(threading.Thread):
 
         p2d = pg.GraphicsView()
 
+        button_play = QtGui.QPushButton('Play')
+        button_play.setFixedWidth(110)
+        button_play.clicked.connect(self.handleButton_play)
+
+        button_next = QtGui.QPushButton('Next')
+        button_next.setFixedWidth(110)
+        button_next.clicked.connect(self.handleButton_next)
+
+        self.checkbox_show_likelihood_field = QtGui.QCheckBox("Show likelihood field")
+        self.checkbox_show_likelihood_field.setChecked(False)
+
+
         ## Create a grid layout to manage the widgets size and position
         layout = QtGui.QGridLayout()
         w.setLayout(layout)
 
         ## Add widgets to the layout in their proper positions
         layout.addWidget(p2d, 0, 0, 1, 5)  
-        #layout.addWidget(text, 2, 4)
+        layout.addWidget(button_play, 2, 0)
+        layout.addWidget(button_next, 2, 1)
+        layout.addWidget(self.checkbox_show_likelihood_field,2,2)
+
 
         # Create a viewBox for 2D image
         vb = pg.ViewBox()
@@ -143,6 +158,11 @@ class LSLAMGUI(threading.Thread):
         ## Start the Qt event loop
         app.exec_()
 
+    def handleButton_play(self):
+        self.state = 1  
+
+    def handleButton_next(self):
+        self.state = 2  
 
     def crl_partcles(self):
         while len(self.particle_handle) > 0:
@@ -172,9 +192,9 @@ class LSLAMGUI(threading.Thread):
             #remove previous laser scan data
             self.sct.clear()
             #update map
-            I = np.zeros(prob.shape)
-            I.fill(1)
-            self.img.setImage(I - prob.transpose())
+            #I = np.zeros(prob.shape)
+            #I.fill(1)
+            self.img.setImage(prob.transpose())
             #update robot pose
             self.robot.setRotation(180.*pose[2]/np.pi)
             self.robot.setPos(pose[0],pose[1])

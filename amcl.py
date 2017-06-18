@@ -30,16 +30,16 @@ lidar_angle = 0.
 lidar_x = 0.
 lidar_y = 0.
 ##########################
-original_point = (100,100)
+original_point = (160,160)
 max_dist = 0.8 
 resolution = 0.025
 fre_thr = 200
 occ_thr = 20
 ##########################
-particle_num = 500
+particle_num = 2000
 init_partcle_pose = (0,0,0)
-init_partcle_trans_sigma = 0.3
-init_partcle_rot_sigma = 0.3
+init_partcle_trans_sigma = 1.3
+init_partcle_rot_sigma = 1.3
 ##########################
 odom_aphla1 = 0.006 #Weight of rotation error resulting from rotation
 odom_aphla2 = 0.030 #Weight of rotation error resulting from translation
@@ -102,11 +102,13 @@ class AMCL():
 
     def run(self):
         self.idx = 0
-        while self.idx < len(self.raw_data):
+        while True:
             time.sleep(0.03)
             if self.gui.state == 1:
                 update = False
                 while not update:
+                    if self.idx >= len(self.raw_data):
+                        break
                     update = self.step()
                     self.idx += 1
                 self.gui_update()
@@ -114,6 +116,8 @@ class AMCL():
                 self.gui.state = 0
                 update = False
                 while not update:
+                    if self.idx >= len(self.raw_data):
+                        break
                     update = self.step()
                     self.idx += 1
                 self.gui_update()                
@@ -156,4 +160,3 @@ costmap.create_likelihood()
 amcl = AMCL(bagreader.data, costmap, gui)
 
 amcl.run()
-time.sleep(100000)

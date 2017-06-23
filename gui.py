@@ -72,7 +72,7 @@ class ParticleItem(QtGui.QGraphicsItem):
         painter.drawLine(-4, 0, 4, 0)
 
 
-class LSLAMGUI(threading.Thread):
+class AMCLGUI(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.setDaemon(True)
@@ -87,7 +87,7 @@ class LSLAMGUI(threading.Thread):
         ## Define a top-level widget to hold everything
         w = QtGui.QWidget()
         w.resize(800,800)
-        w.setWindowTitle("LiDAR SLAM Viewer")
+        w.setWindowTitle("AMCL Viewer")
 
         ## Create some widgets to be placed inside
         #text = QtGui.QLineEdit('enter text')

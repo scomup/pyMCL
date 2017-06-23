@@ -25,13 +25,24 @@ class Laser_model:
     def get_probability(self, laser_pose, scan):
         map_scan, world_scan = self.get_scan_in_world_coord(scan, laser_pose)
         p = 0
+        in_flag1 = (map_scan[:,0] < float(self.prob_map.size_x)) * (map_scan[:,0] >= 0)
+        in_flag2 = (map_scan[:,1] < float(self.prob_map.size_y)) * (map_scan[:,1] >= 0)
+        in_flag = in_flag1 * in_flag2
+        map_scan = map_scan[in_flag]
+        z = self.prob_map.map_lkf[(map_scan[:,1]).astype(int),(map_scan[:,0]).astype(int)]
+        pz = self.z_hit * np.exp(-(z * z) / self.z_hit_denom) + self.z_rand * self.z_rand_mult
+        p = np.sum(pz*pz*pz)
+        # use more elegent way
+        """
+        pp = 0
         for i in range(map_scan.shape[0]):
-            if map_scan[i,0] >= 0 and map_scan[i,0] < self.prob_map.size_x and map_scan[i,1] >= 0 and map_scan[i,1] < self.prob_map.size_y:
+            if map_scan[i,0] >= 0. and map_scan[i,0] < float(self.prob_map.size_x) and map_scan[i,1] >= 0. and map_scan[i,1] < float(self.prob_map.size_y):
                 z =  self.prob_map.map_lkf[int(map_scan[i,1]),int(map_scan[i,0])]
             else:
                 z = self.range_max
             pz = self.z_hit * exp(-(z * z) / self.z_hit_denom) + self.z_rand * self.z_rand_mult
-            p += pz*pz*pz
+            pp += pz*pz*pz
+        """
         return p
         
     def get_scan_in_world_coord(self, scan, laser_pose):

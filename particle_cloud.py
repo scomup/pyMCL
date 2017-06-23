@@ -6,21 +6,26 @@ import numpy as np
 
 
 class Particle_cloud:
-    def __init__(self, num=1000):
+    def __init__(self, num=1000, alpha_slow = 0.001, alpha_fast = 0.1):
         self.num = num
         self.particles = []
         self.particles = []
-        self.alpha_slow = 0.001
-        self.alpha_fast = 0.1
+        self.alpha_slow = alpha_slow
+        self.alpha_fast = alpha_fast
         self.w_slow = 0
         self.w_fast = 0
         self.best_p = [0,0,0]
 
-    def set_init_particles(self,pose,sigma1,sigma2):
+    def set_init_particles(self,init_partcle_pose_unknow, pose,sigma1,sigma2):
         for i in range(self.num):
-            x = random.gauss(pose[0],sigma1)
-            y = random.gauss(pose[1],sigma1)
-            a = random.gauss(pose[2],sigma2)
+            if  (init_partcle_pose_unknow):
+                x = random.random()*5 -1.5
+                y = random.random()*5 -1
+                a = random.random()*2*np.pi-np.pi   
+            else:
+                x = random.gauss(pose[0],sigma1)
+                y = random.gauss(pose[1],sigma1)
+                a = random.gauss(pose[2],sigma2)
             if a > np.pi:
                 a = a % np.pi
             elif a < -np.pi:
@@ -66,6 +71,7 @@ class Particle_cloud:
                 
     def update_by_resample(self):  
         resampled = [] 
+        #print 'fast:', self.w_fast, 'slow:', self.w_slow
         w_diff = 1.0 - self.w_fast / self.w_slow  
         if w_diff < 0.0:
             w_diff = 0.0

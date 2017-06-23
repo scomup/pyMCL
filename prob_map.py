@@ -56,7 +56,7 @@ class Prob_map:
         May have more elegant way ...
         """
         # For make the pocessed cell
-        map_mak = (self.map_occ == 1) + (self.map_occ == 0)
+        map_mak = (self.map_occ == 1) #+ (self.map_occ == 0)
         # The pocesses list
         tmp = np.array(np.where(self.map_occ == 1))
         mak_lst = [ (tmp[1][i],tmp[0][i]) for i in range(tmp[0].size)]

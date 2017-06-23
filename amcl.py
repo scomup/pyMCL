@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: UTF-8
 
-from gui import LSLAMGUI
+from gui import AMCLGUI
 #from likelihood_field_model import Prob_map
 from prob_map import Prob_map
 from readbag import BagReader
@@ -30,16 +30,19 @@ lidar_angle = 0.
 lidar_x = 0.
 lidar_y = 0.
 ##########################
-original_point = (160,160)
+original_point = (100,100)
 max_dist = 0.8 
 resolution = 0.025
 fre_thr = 200
 occ_thr = 20
 ##########################
-particle_num = 2000
+particle_num = 5000
+init_partcle_pose_unknow = True
 init_partcle_pose = (0,0,0)
 init_partcle_trans_sigma = 1.3
 init_partcle_rot_sigma = 1.3
+alpha_slow =  0.01
+alpha_fast = 0.1
 ##########################
 odom_aphla1 = 0.006 #Weight of rotation error resulting from rotation
 odom_aphla2 = 0.030 #Weight of rotation error resulting from translation
@@ -57,8 +60,8 @@ class AMCL():
         self.costmap = costmap
         self.gui = gui
         self.scan_base = (lidar_x,lidar_y,lidar_angle)
-        self.particle_cloud = Particle_cloud(particle_num)
-        self.particle_cloud.set_init_particles(init_partcle_pose, init_partcle_trans_sigma, init_partcle_rot_sigma)
+        self.particle_cloud = Particle_cloud(particle_num, alpha_slow, alpha_fast)
+        self.particle_cloud.set_init_particles(init_partcle_pose_unknow, init_partcle_pose, init_partcle_trans_sigma, init_partcle_rot_sigma)
         self.odom_model = Odom_Model(odom_aphla1, odom_aphla2, odom_aphla3, odom_aphla4)
         self.laser_model = Laser_model(costmap,z_hit, z_rand, sigma_hit, range_max)
 
@@ -98,7 +101,7 @@ class AMCL():
             if show_likelihood_field:
                 gui.setdata(self.costmap.map_lkf, ps, pose_gui,map_scan)
             else:
-                gui.setdata(self.costmap.map_raw, ps, pose_gui,map_scan)
+                gui.setdata(self.costmap.map_raw.astype(float), ps, pose_gui,map_scan)
 
     def run(self):
         self.idx = 0
@@ -142,16 +145,26 @@ class AMCL():
             self.pre_pose = init_partcle_pose
             self.cur_odom = odom
             return False
+        start = time.time()
         self.particle_cloud.update_by_odom_model(self.odom_model.update, self.pre_pose, self.cur_pose)
+        elapsed_time = time.time() - start
+        #print ("update_by_odom_model elapsed_time:{0}".format(elapsed_time)) + "[sec]"
+        start = time.time()
         self.particle_cloud.update_by_laser_model(self.laser_model.get_probability,self.scan_base ,self.scan)
+        elapsed_time = time.time() - start
+        #print ("update_by_laser_model elapsed_time:{0}".format(elapsed_time)) + "[sec]"
+        start = time.time()
         self.particle_cloud.update_by_resample()
+        elapsed_time = time.time() - start
+        #print ("update_by_resample elapsed_time:{0}".format(elapsed_time)) + "[sec]"
+        start = time.time()
         self.pre_pose = self.cur_pose
         return True
         
 
 
 bagreader = BagReader(bagfile, scan_topic, odom_topic, start_time, end_time)
-gui = LSLAMGUI()
+gui = AMCLGUI()
 gui.start()
 costmap = Prob_map(original_point, max_dist, resolution, fre_thr , occ_thr)
 costmap.read_img(image_file_name)

@@ -2,7 +2,6 @@
 # coding: UTF-8
 
 import rosbag
-from std_msgs.msg import Int32, String
 import rospy, math, random
 import numpy as np
 from sensor_msgs.msg import LaserScan
@@ -23,15 +22,15 @@ class BagReader:
         self.points = []
         self.odoms = []
         self.data = []
-        print "Bag file reading..."
+        print("Bag file reading...")
         self.bag = rosbag.Bag(bagfile, 'r')
-        print "Scan data reading..."
+        print("Scan data reading...")
         self.readscan()
-        print "Odom data reading..."
+        print("Odom data reading...")
         self.readodom()
-        print "Data sync..."
+        print("Data sync...")
         self.sync()
-        print "All ready."
+        print("All ready.")
         self.bag.close()
 
     def readscan(self):
@@ -85,7 +84,7 @@ class BagReader:
 
 class GUI(object):
     def __init__(self, bagreader):
-        print "!You can use keyboard(left/right) or botton to play bag file."
+        print("!You can use keyboard(left/right) or botton to play bag file.")
         self.idx = 0
         self.data = bagreader.data
         self.fig, self.ax = plt.subplots()
@@ -132,7 +131,7 @@ class GUI(object):
             self.odom_show.remove()
         except:
             pass
-        print self.idx
+        print(self.idx)
         scan = self.data[self.idx][0]
         odom = np.matrix(self.data[self.idx][1])
         scan_size = scan.shape[0]

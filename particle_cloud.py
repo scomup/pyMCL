@@ -83,7 +83,7 @@ class Particle_cloud:
             c.append(c[i]+self.particles[i][1])
         for count in range(self.num):
             if random.random() < w_diff:
-                print "TODO!!!"
+                print("TODO!!!")
                 sample = list(self.particles[i])
                 resampled.append(sample)
             else:
@@ -106,17 +106,10 @@ class Particle_cloud:
         self.particles = resampled
             
 
-
-                    
-                
-            
-        
-    
-
 if __name__ == '__main__':
     from odom_model import Odom_Model
     odom_model = Odom_Model()
     particle_cloud = Particle_cloud(3)
-    particle_cloud.set_init_particles((0,0,0),0,0)
+    particle_cloud.set_init_particles((0, 0, 0),0, 0, 0)
     particle_cloud.update_by_odom_model(odom_model.update, (0,1,0),(0,2,0))
-    print particle_cloud.particles
+    print(particle_cloud.particles)

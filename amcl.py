@@ -5,7 +5,6 @@ from gui import AMCLGUI
 #from likelihood_field_model import Prob_map
 from prob_map import Prob_map
 from readbag import BagReader
-from particle_filter import Particle_filter
 from odom_model import Odom_Model
 from particle_cloud import Particle_cloud
 from laser_model import Laser_model
@@ -13,6 +12,9 @@ from math import *
 import numpy as np
 import tf
 import time
+from PyQt5.QtWidgets import QApplication
+import threading
+
 
 ##########################
 bagfile = 'h3.bag'
@@ -81,11 +83,6 @@ class AMCL():
         da = self.pre_pose[2] - self.cur_pose[2]
         trans = sqrt(dx**2 + dy**2)
         update = (trans > d_thresh_) or (fabs(da) > a_thresh_)
-        #print trans
-        #if trans > d_thresh_:
-        #    print 'over trans'
-        #if fabs(da) > a_thresh_:
-        #    print 'over angle'
         return update
 
     def gui_update(self):
@@ -102,28 +99,6 @@ class AMCL():
                 gui.setdata(self.costmap.map_lkf, ps, pose_gui,map_scan)
             else:
                 gui.setdata(self.costmap.map_raw.astype(float), ps, pose_gui,map_scan)
-
-    def run(self):
-        self.idx = 0
-        while True:
-            time.sleep(0.03)
-            if self.gui.state == 1:
-                update = False
-                while not update:
-                    if self.idx >= len(self.raw_data):
-                        break
-                    update = self.step()
-                    self.idx += 1
-                self.gui_update()
-            elif self.gui.state == 2:
-                self.gui.state = 0
-                update = False
-                while not update:
-                    if self.idx >= len(self.raw_data):
-                        break
-                    update = self.step()
-                    self.idx += 1
-                self.gui_update()                
 
             
     def step(self):
@@ -162,14 +137,40 @@ class AMCL():
         return True
         
 
+def update(amcl):
+        amcl.idx = 0
+        while True:
+            time.sleep(0.03)
+            if amcl.gui.state == 1:
+                update = False
+                while not update:
+                    if amcl.idx >= len(amcl.raw_data):
+                        break
+                    update = amcl.step()
+                    amcl.idx += 1
+                amcl.gui_update()
+            elif amcl.gui.state == 2:
+                amcl.gui.state = 0
+                update = False
+                while not update:
+                    if amcl.idx >= len(amcl.raw_data):
+                        break
+                    update = amcl.step()
+                    amcl.idx += 1
+                amcl.gui_update()    
 
-bagreader = BagReader(bagfile, scan_topic, odom_topic, start_time, end_time)
-gui = AMCLGUI()
-gui.start()
-costmap = Prob_map(original_point, max_dist, resolution, fre_thr , occ_thr)
-costmap.read_img(image_file_name)
-costmap.create_likelihood()
 
-amcl = AMCL(bagreader.data, costmap, gui)
+if __name__ == "__main__":
+    app = QApplication([])
+    bagreader = BagReader(bagfile, scan_topic, odom_topic, start_time, end_time)
+    gui = AMCLGUI()
+    costmap = Prob_map(original_point, max_dist, resolution, fre_thr , occ_thr)
+    costmap.read_img(image_file_name)
+    costmap.create_likelihood()
 
-amcl.run()
+    amcl = AMCL(bagreader.data, costmap, gui)
+
+    th = threading.Thread(target=update, args=(amcl, ))
+    th.start()
+
+    app.exec_()

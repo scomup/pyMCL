@@ -1,23 +1,24 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # coding: UTF-8
 
-from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
-import signal
-import Queue
-import sys
-import time
+import queue
 import threading
+from PyQt5 import QtGui
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QApplication
+import threading
+import time
+import random
 
-
-class RobotItem(QtGui.QGraphicsItem):
+class RobotItem(pg.QtWidgets.QGraphicsItem):
     """a sample robot item"""
     def __init__(self, color):
         super(RobotItem, self).__init__()
-        #self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
-        self.setCacheMode(QtGui.QGraphicsItem.DeviceCoordinateCache)
+        #self.setFlag(pg.QtWidgets.QGraphicsItem.ItemIsMovable)
+        self.setCacheMode(pg.QtWidgets.QGraphicsItem.DeviceCoordinateCache)
         self.setZValue(1)
         self.color = color
         
@@ -29,7 +30,7 @@ class RobotItem(QtGui.QGraphicsItem):
     def paint(self, painter, option, widget):
         #Draw a sample robot
         pen = QtGui.QPen()
-        pen.setWidth(1);
+        pen.setWidth(1)
         if self.color =='r':
             pen.setBrush(QtCore.Qt.red)
         elif self.color =='b':
@@ -41,12 +42,12 @@ class RobotItem(QtGui.QGraphicsItem):
         painter.drawEllipse(QtCore.QPointF(0.0, 0.0), 5, 5)
         painter.drawLine(0, 0, 5, 0)
 
-class ParticleItem(QtGui.QGraphicsItem):
+class ParticleItem(pg.QtWidgets.QGraphicsItem):
     """a sample robot item"""
     def __init__(self, color):
         super(ParticleItem, self).__init__()
-        #self.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
-        self.setCacheMode(QtGui.QGraphicsItem.DeviceCoordinateCache)
+        #self.setFlag(pg.QtWidgets.QGraphicsItem.ItemIsMovable)
+        self.setCacheMode(pg.QtWidgets.QGraphicsItem.DeviceCoordinateCache)
         self.setZValue(1)
         self.color = color
         
@@ -58,7 +59,7 @@ class ParticleItem(QtGui.QGraphicsItem):
     def paint(self, painter, option, widget):
         #Draw a sample robot
         pen = QtGui.QPen()
-        pen.setWidth(0.9);
+        pen.setWidth(1)
         if self.color =='r':
             pen.setBrush(QtCore.Qt.red)
         elif self.color =='b':
@@ -76,39 +77,39 @@ class AMCLGUI(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.setDaemon(True)
-        self.q = Queue.Queue()
+        self.q = queue.Queue()
         self.state = 0 
-        self.particle_handle = [] 
+        self.particle_handle = []
+        self.init()
 
-    def run(self):
+    def init(self):
         ## Always start by initializing Qt (only once per application)
-        app = QtGui.QApplication([])
 
         ## Define a top-level widget to hold everything
-        w = QtGui.QWidget()
-        w.resize(800,800)
-        w.setWindowTitle("AMCL Viewer")
+        self.w = pg.QtWidgets.QWidget()
+        self.w.resize(800,800)
+        self.w.setWindowTitle("AMCL Viewer")
 
         ## Create some widgets to be placed inside
-        #text = QtGui.QLineEdit('enter text')
+        #text = pg.QtWidgets.QLineEdit('enter text')
 
         p2d = pg.GraphicsView()
 
-        button_play = QtGui.QPushButton('Play')
+        button_play = pg.QtWidgets.QPushButton('Play')
         button_play.setFixedWidth(110)
         button_play.clicked.connect(self.handleButton_play)
 
-        button_next = QtGui.QPushButton('Next')
+        button_next = pg.QtWidgets.QPushButton('Next')
         button_next.setFixedWidth(110)
         button_next.clicked.connect(self.handleButton_next)
 
-        self.checkbox_show_likelihood_field = QtGui.QCheckBox("Show likelihood field")
+        self.checkbox_show_likelihood_field = pg.QtWidgets.QCheckBox("Show likelihood field")
         self.checkbox_show_likelihood_field.setChecked(False)
 
 
         ## Create a grid layout to manage the widgets size and position
-        layout = QtGui.QGridLayout()
-        w.setLayout(layout)
+        layout = pg.QtWidgets.QGridLayout()
+        self.w.setLayout(layout)
 
         ## Add widgets to the layout in their proper positions
         layout.addWidget(p2d, 0, 0, 1, 5)  
@@ -132,7 +133,7 @@ class AMCLGUI(threading.Thread):
         vb.addItem(self.img)
 
         ## Display the widget as a new window
-        w.show()
+        # w.show()
 
         ## Set image level
         self.img.setLevels([0, 1])
@@ -148,15 +149,12 @@ class AMCLGUI(threading.Thread):
         self.robot = RobotItem('b')
         self.robot.setParentItem(self.img)
         self.robot.setZValue(10)
-        
-        
-        #Set timer
-        timer = pg.QtCore.QTimer()
-        timer.timeout.connect(self.update)
-        timer.start(300)
 
-        ## Start the Qt event loop
-        app.exec_()
+        #Set timer
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update)
+        self.timer.start(300)
+        self.w.show()
 
     def handleButton_play(self):
         self.state = 1  
@@ -178,6 +176,7 @@ class AMCLGUI(threading.Thread):
             a.setRotation(180.*particle[2]/np.pi)
             a.setParentItem(self.img)
             self.particle_handle.append(a)
+
 
     def update(self):
         try:
@@ -202,25 +201,32 @@ class AMCLGUI(threading.Thread):
             #spots = [{'pos': pos} for pos in newscan]
             spots = [{'pos': newscan[i,:] } for i in range(newscan.shape[0])]
             self.sct.addPoints(spots)
-        except Queue.Empty:
+        except queue.Empty:
             pass
 
     def setdata(self, probdata, particles, robotpose, newscan):
         self.q.put( ( probdata, particles, robotpose, newscan) )
+        # self.update()
         pass
 
-if __name__ == "__main__":
-    gui = LSLAMGUI()
-    gui.start()
-    print 'sample gui test'
-    import random
-    for i in range(1000):
-        time.sleep(0.05)
+
+def update(gui):
+    i = 0.0
+    for i in range(100000):
+        print(i)
+        time.sleep(0.01)
         newscan = np.zeros((10,2))
         newscan.fill(0.1)
         random.random
-        particles = [(100*random.random()+200 , 100*random.random()+200, random.random()) for i in range(1000)]
+        particles = [(100*random.random()+200 , 100*random.random()+200, random.random()) for i in range(100)]
         #particles = [ (-20,-20,0) ]
         gui.setdata(np.random.rand(400,400), particles, [0,0,i], newscan)
+        # gui.update()
 
-    
+if __name__ == "__main__":
+    app = QApplication([])
+    gui = AMCLGUI()
+    th = threading.Thread(target=update, args=(gui, ))
+    th.start()
+    app.exec_()
+    pass

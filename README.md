@@ -1,6 +1,6 @@
 # pythonAMCL
 
-An AMCL Python implementation for learning purposes.
+An Monte Carlo localization (MCL) Python implementation for learning purposes.
 
 ## Requirements
 
@@ -14,4 +14,4 @@ pip3 install -r requirements.txt
 python3 amcl.py
 ```
 
-<img src="demo.gif" width="640px">
+<img src="data/demo.gif" width="640px">

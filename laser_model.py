@@ -33,16 +33,6 @@ class Laser_model:
         pz = self.z_hit * np.exp(-(z * z) / self.z_hit_denom) + self.z_rand * self.z_rand_mult
         p = np.sum(pz*pz*pz)
         # use more elegent way
-        """
-        pp = 0
-        for i in range(map_scan.shape[0]):
-            if map_scan[i,0] >= 0. and map_scan[i,0] < float(self.prob_map.size_x) and map_scan[i,1] >= 0. and map_scan[i,1] < float(self.prob_map.size_y):
-                z =  self.prob_map.map_lkf[int(map_scan[i,1]),int(map_scan[i,0])]
-            else:
-                z = self.range_max
-            pz = self.z_hit * exp(-(z * z) / self.z_hit_denom) + self.z_rand * self.z_rand_mult
-            pp += pz*pz*pz
-        """
         return p
         
     def get_scan_in_world_coord(self, scan, laser_pose):

@@ -2,8 +2,7 @@
 # coding: UTF-8
 
 from gui import AMCLGUI
-#from likelihood_field_model import Prob_map
-from prob_map import Prob_map
+from grid_map import GridMap
 from readbag import BagReader
 from odom_model import Odom_Model
 from particle_cloud import Particle_cloud
@@ -56,16 +55,16 @@ z_rand = 0.05
 sigma_hit = 0.2
 range_max = 8.
 
-class AMCL():
-    def __init__(self, raw_data, costmap, gui):
+class MCL():
+    def __init__(self, raw_data, grid, gui):
         self.raw_data = raw_data
-        self.costmap = costmap
+        self.grid = grid
         self.gui = gui
         self.scan_base = (lidar_x,lidar_y,lidar_angle)
         self.particle_cloud = Particle_cloud(particle_num, alpha_slow, alpha_fast)
         self.particle_cloud.set_init_particles(init_partcle_pose_unknow, init_partcle_pose, init_partcle_trans_sigma, init_partcle_rot_sigma)
         self.odom_model = Odom_Model(odom_aphla1, odom_aphla2, odom_aphla3, odom_aphla4)
-        self.laser_model = Laser_model(costmap,z_hit, z_rand, sigma_hit, range_max)
+        self.laser_model = Laser_model(grid,z_hit, z_rand, sigma_hit, range_max)
 
     def matrix_to_pose(self, odom):
         al, be, ga = tf.transformations.euler_from_matrix(odom[0:3,0:3])
@@ -86,19 +85,19 @@ class AMCL():
         return update
 
     def gui_update(self):
-            ps = [ (p[0][0]/self.costmap.resolution + self.costmap.original_point[0],p[0][1]/self.costmap.resolution + self.costmap.original_point[1], p[0][2]) for p in self.particle_cloud.particles ]
+            ps = [ (p[0][0]/self.grid.resolution + self.grid.original_point[0],p[0][1]/self.grid.resolution + self.grid.original_point[1], p[0][2]) for p in self.particle_cloud.particles ]
             pose = self.particle_cloud.best_p[0]
             #print self.laser_model.get_probability(self.pre_pose, self.scan)
             pose_gui = [0,0,0]
-            pose_gui[0] = pose[0]/self.costmap.resolution + self.costmap.original_point[0]
-            pose_gui[1] = pose[1]/self.costmap.resolution + self.costmap.original_point[1]
+            pose_gui[0] = pose[0]/self.grid.resolution + self.grid.original_point[0]
+            pose_gui[1] = pose[1]/self.grid.resolution + self.grid.original_point[1]
             pose_gui[2] = pose[2]
             map_scan, world_scan = self.laser_model.get_scan_in_world_coord(self.scan, pose)
             show_likelihood_field = self.gui.checkbox_show_likelihood_field.isChecked()
             if show_likelihood_field:
-                gui.setdata(self.costmap.map_lkf, ps, pose_gui,map_scan)
+                gui.setdata(self.grid.map_lkf, ps, pose_gui,map_scan)
             else:
-                gui.setdata(self.costmap.map_raw.astype(float), ps, pose_gui,map_scan)
+                gui.setdata(self.grid.map_raw.astype(float), ps, pose_gui,map_scan)
 
             
     def step(self):
@@ -164,11 +163,9 @@ if __name__ == "__main__":
     app = QApplication([])
     bagreader = BagReader(bagfile, scan_topic, odom_topic, start_time, end_time)
     gui = AMCLGUI()
-    costmap = Prob_map(original_point, max_dist, resolution, fre_thr , occ_thr)
-    costmap.read_img(image_file_name)
-    costmap.create_likelihood()
+    grid_map = GridMap('data.')
 
-    amcl = AMCL(bagreader.data, costmap, gui)
+    amcl = MCL(bagreader.data, grid_map, gui)
 
     th = threading.Thread(target=update, args=(amcl, ))
     th.start()
